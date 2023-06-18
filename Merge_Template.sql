@@ -1,3 +1,6 @@
+-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-- FED Rate
+-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 CREATE TABLE FED_RATE_MERGED AS
 SELECT 
   RECORD_DATE,
@@ -21,3 +24,34 @@ FROM (
   SELECT RECORD_DATE, NULL as Value_mtg_avg_30, NULL as Value_real_inr_rate_10yr, NULL as Value_fed_debt, NULL as Value_fed_funds_eff_rate, NULL as Value_int_rate_reserve, DGS10 as Value_treasury_yield FROM TREASURY_YIELD_10YR
 ) 
 GROUP BY RECORD_DATE;
+
+
+
+
+
+-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-- CPI
+-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+CREATE TABLE CPI_MERGED AS
+SELECT 
+  RECORD_DATE,
+  MAX(Value_cpi_all_urban) as Value_cpi_all_urban, 
+  MAX(Value_cpi_all_urban_pctchg) as Value_cpi_all_urban_pctchg, 
+  MAX(Value_cpi_all) as Value_cpi_all, 
+  MAX(Value_cpi_median) as Value_cpi_median
+FROM (
+  SELECT RECORD_DATE, MEDCPIM158SFRBCLE as Value_cpi_all_urban, NULL as Value_cpi_all_urban_pctchg, NULL as Value_cpi_all, NULL as Value_cpi_median FROM CPI_MEDIAN
+  UNION ALL
+  SELECT RECORD_DATE, NULL as Value_cpi_all_urban, CPALTT01USM657N as Value_cpi_all_urban_pctchg, NULL as Value_cpi_all, NULL as Value_cpi_median FROM CPI_ALL_ITEMS_URBAN_PCTCHG
+  UNION ALL
+  SELECT RECORD_DATE, NULL as Value_cpi_all_urban, NULL as Value_cpi_all_urban_pctchg, CPALTT01USM657N as Value_cpi_all, NULL as Value_cpi_median FROM CPI_ALL_ITEMS_URBAN
+  UNION ALL
+  SELECT RECORD_DATE, NULL as Value_cpi_all_urban, NULL as Value_cpi_all_urban_pctchg, NULL as Value_cpi_all, USACPIALLMINMEI as Value_cpi_median FROM CPI_ALL
+) 
+GROUP BY RECORD_DATE;
+-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-- Create new table with FISCAL QUARTER
+CREATE TABLE CPI_MERGED_BQ AS SELECT * FROM CPI_MERGED;
+ALTER TABLE CPI_MERGED_BQ ADD (FISCAL_QUARTER VARCHAR2(5));
+UPDATE CPI_MERGED_BQ SET FISCAL_QUARTER = 'Q' || TO_CHAR(RECORD_DATE, 'Q');
+SELECT * FROM CPI_MERGED_BQ;
